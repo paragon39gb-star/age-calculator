@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZK Age Calculator — Live Precision</title>
+    <style>
+        :root {
+            --bg: #0b0b14;
+            --card-bg: rgba(22, 22, 40, 0.85);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text: #f0f0f8;
+            --text-secondary: #b0b0d0;
+            --accent-gold: #f7b84e;
+            --accent-rose: #f06080;
+            --accent-teal: #45d9c9;
+            --accent-purple: #a78bfa;
+            --accent-blue: #60a5fa;
+            --accent-pink: #f472b6;
+            --accent-week: #facc15;
+            --input-bg: rgba(18, 18, 42, 0.8);
+            --glow-soft: 0 8px 32px rgba(0, 0, 0, 0.6);
+            --radius: 20px;
+            --radius-sm: 14px;
+            --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+            --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 15% 20%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 75%, rgba(247, 184, 78, 0.07) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(69, 217, 201, 0.04) 0%, transparent 60%);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+            backdrop-filter: blur(2px);
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 16s infinite alternate ease-in-out;
+        }
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: #a78bfa;
+            top: -150px;
+            left: -100px;
+            animation-duration: 20s;
+        }
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: #f7b84e;
+            bottom: -130px;
+            right: -120px;
+            animation-duration: 24s;
+            animation-delay: -5s;
+        }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.1); }
+            66% { transform: translate(-30px, 20px) scale(0.95); }
+            100% { transform: translate(20px, 10px) scale(1.05); }
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 460px;
+            position: relative;
+            z-index: 2;
+            animation: fadeSlideUp 0.7s ease-out;
+        }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+        .app-header .icon {
+            font-size: 48px;
+            margin-bottom: 4px;
+            display: inline-block;
+            animation: softBounce 2.5s infinite ease-in-out;
+        }
+        @keyframes softBounce {
+            0%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(0); }
+            80% { transform: translateY(-6px); }
+            90% { transform: translateY(0); }
+        }
+        .app-header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #f7b84e, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+        .app-header .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 18px 18px;
+            margin-bottom: 16px;
+            box-shadow: var(--glow-soft);
+            transition: all 0.25s ease;
+        }
+        .glass-card:focus-within {
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 28px rgba(167, 139, 250, 0.15);
+        }
+
+
+        .date-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .input-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #d0d0f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .input-group input {
+            background: var(--input-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 60px;
+            padding: 14px 16px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: var(--font);
+            outline: none;
+            transition: var(--transition);
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .input-group input:focus {
+            border-color: #f7b84e;
+            box-shadow: 0 0 12px rgba(247, 184, 78, 0.15);
+        }
+        .input-group input::-webkit-calendar-picker-indicator {
+            filter: invert(0.85);
+            cursor: pointer;
+            opacity: 0.9;
+            padding: 4px;
+        }
+        .input-hint {
+            font-size: 0.7rem;
+            color: #8a8ac0;
+            margin-top: 2px;
+        }
+
+        .live-badge {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(69, 217, 201, 0.18);
+            color: #45d9c9;
+            padding: 3px 10px;
+            border-radius: 30px;
+            margin-left: 6px;
+            animation: pulseBadge 2s infinite;
+        }
+        @keyframes pulseBadge {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 18px 10px;
+            text-align: center;
+            box-shadow: var(--glow-soft);
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 3px 3px 0 0;
+        }
+        .years::before { background: var(--accent-gold); }
+        .months::before { background: var(--accent-rose); }
+        .weeks::before { background: var(--accent-week); }
+        .days::before { background: var(--accent-teal); }
+        .hours::before { background: var(--accent-purple); }
+        .minutes::before { background: var(--accent-blue); }
+        .seconds::before { background: var(--accent-pink); }
+        .seconds {
+            grid-column: span 2;
+            margin-top: 4px;
+        }
+        .seconds.live-glow {
+            animation: glowPulse 1.8s infinite;
+        }
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(244, 114, 182, 0.2), var(--glow-soft); }
+            50% { box-shadow: 0 0 40px rgba(244, 114, 182, 0.5), var(--glow-soft); }
+        }
+        .stat-value {
+            font-size: 2.6rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -1px;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.15s ease;
+        }
+        .years .stat-value { color: #fbbf24; }
+        .months .stat-value { color: #f87171; }
+        .weeks .stat-value { color: #facc15; }
+        .days .stat-value { color: #2dd4bf; }
+        .hours .stat-value { color: #a78bfa; }
+        .minutes .stat-value { color: #60a5fa; }
+        .seconds .stat-value { color: #f472b6; }
+        .stat-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #a0a0d0;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Totals extra card row */
+        .totals-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .total-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 14px 8px;
+            text-align: center;
+            box-shadow: var(--glow-soft);
+        }
+        .total-card .total-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fde047;
+        }
+        .total-card .total-label {
+            font-size: 0.7rem;
+            color: #a0a0d0;
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .no-data .total-value {
+            color: #4a4a6a !important;
+            font-size: 1.5rem !important;
+        }
+
+        .total-days-bar {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--glow-soft);
+            margin-bottom: 12px;
+            font-weight: 500;
+            color: #c8c8e8;
+        }
+        .total-days-bar .big-number {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fde047;
+            margin: 0 4px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 60px;
+            color: #e0e0f0;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-family: var(--font);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+            transition: all 0.25s ease;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+        .btn.copy-success {
+            border-color: #2dd4bf;
+            color: #2dd4bf;
+            background: rgba(45, 212, 191, 0.08);
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 4px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 60px;
+            color: #a0a0d0;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: var(--font);
+            font-size: 0.9rem;
+            transition: all 0.25s ease;
+        }
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #d0d0f0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 16px;
+            padding: 14px 10px 6px;
+            color: #6a6a9a;
+            font-size: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(4px);
+        }
+        .footer span {
+            font-weight: 600;
+            color: #a0a0d0;
+        }
+
+        @media (max-width: 400px) {
+            .stat-value { font-size: 2rem; }
+            .stat-label { font-size: 0.7rem; }
+            .app-header h1 { font-size: 1.8rem; }
+            .total-value { font-size: 1.5rem; }
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="app-container">
+        <div class="app-header">
+            <div class="icon">⏳</div>
+            <h1>ZK Age Calculator</h1>
+            <p class="subtitle">Precision difference from your date to any target</p>
+        </div>
+
+        <!-- Name -->
+        <div class="glass-card">
+            <div class="name-row">
+                <label for="userName">👤 Name</label>
+                <input type="text" id="userName" placeholder="Enter your name (optional)" autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="glass-card">
+            <div class="date-grid">
+                <div class="input-group">
+                    <label>📅 From Date</label>
+                    <input type="date" id="fromDate" title="Start date">
+                    <span class="input-hint">Start date (e.g., date of birth)</span>
+                </div>
+                <div class="input-group">
+                    <label>
+                        📅 To Date
+                        <span class="live-badge" id="liveBadge">● LIVE</span>
+                    </label>
+                    <input type="date" id="toDate" title="End date">
+                    <span class="input-hint">Set to today for live updates</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid (original breakdown) -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card years no-data"><div class="stat-value" id="valYears">—</div><div class="stat-label">Years</div></div>
+            <div class="stat-card months no-data"><div class="stat-value" id="valMonths">—</div><div class="stat-label">Months</div></div>
+            <div class="stat-card weeks no-data"><div class="stat-value" id="valWeeks">—</div><div class="stat-label">Weeks</div></div>
+            <div class="stat-card days no-data"><div class="stat-value" id="valDays">—</div><div class="stat-label">Days</div></div>
+            <div class="stat-card hours no-data"><div class="stat-value" id="valHours">—</div><div class="stat-label">Hours</div></div>
+            <div class="stat-card minutes no-data"><div class="stat-value" id="valMinutes">—</div><div class="stat-label">Minutes</div></div>
+            <div class="stat-card seconds no-data" id="secondsCard"><div class="stat-value" id="valSeconds">—</div><div class="stat-label">Seconds</div></div>
+        </div>
+
+        <!-- Totals: Months, Days, Hours -->
+        <div class="totals-row" id="totalsRow">
+            <div class="total-card no-data"><div class="total-value" id="totalMonths">—</div><div class="total-label">Total Months</div></div>
+            <div class="total-card no-data"><div class="total-value" id="totalDays">—</div><div class="total-label">Total Days</div></div>
+            <div class="total-card no-data"><div class="total-value" id="totalHours">—</div><div class="total-label">Total Hours</div></div>
+        </div>
+
+        <div class="actions">
+            <button class="btn" id="copyBtn">📋 Copy</button>
+            <button class="btn" id="shareBtn">📤 Share</button>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">🔄 Reset All</button>
+
+        <div class="footer">
+            Developed by <span>Hafiz Khalid Mahmood</span> | Mob: <span>0310-6465624</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const userName = document.getElementById('userName');
+            const fromDate = document.getElementById('fromDate');
+            const toDate = document.getElementById('toDate');
+            const liveBadge = document.getElementById('liveBadge');
+            const copyBtn = document.getElementById('copyBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            const valYears = document.getElementById('valYears');
+            const valMonths = document.getElementById('valMonths');
+            const valWeeks = document.getElementById('valWeeks');
+            const valDays = document.getElementById('valDays');
+            const valHours = document.getElementById('valHours');
+            const valMinutes = document.getElementById('valMinutes');
+            const valSeconds = document.getElementById('valSeconds');
+            const totalMonthsEl = document.getElementById('totalMonths');
+            const totalDaysEl = document.getElementById('totalDays');
+            const totalHoursEl = document.getElementById('totalHours');
+            const secondsCard = document.getElementById('secondsCard');
+            const allCards = document.querySelectorAll('.stat-card, .total-card');
+
+            let currentDiff = null;
+            let liveInterval = null;
+            let isLiveActive = false;
+
+            function fmt(n) {
+                if (n === null || n === undefined || isNaN(n)) return '—';
+                return n.toLocaleString('en-US');
+            }
+
+            function computeDiff(start, end) {
+                if (start > end) return null;
+                const msDiff = end.getTime() - start.getTime();
+
+                let years = end.getFullYear() - start.getFullYear();
+                let months = end.getMonth() - start.getMonth();
+                let days = end.getDate() - start.getDate();
+                let hours = end.getHours() - start.getHours();
+                let minutes = end.getMinutes() - start.getMinutes();
+                let seconds = end.getSeconds() - start.getSeconds();
+
+                if (seconds < 0) { seconds += 60; minutes--; }
+                if (minutes < 0) { minutes += 60; hours--; }
+                if (hours < 0) { hours += 24; days--; }
+                if (days < 0) {
+                    const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+                    days += prevMonth.getDate();
+                    months--;
+                }
+                if (months < 0) { months += 12; years--; }
+                if (years < 0) return null;
+
+                const totalDays = Math.floor(msDiff / 86400000);
+                const totalHours = Math.floor(msDiff / 3600000);
+                const totalMonths = years * 12 + months; // full calendar months
+                const weeks = Math.floor(days / 7);
+                const remainingDays = days % 7;
+
+                return { years, months, weeks, days: remainingDays, hours, minutes, seconds, totalDays, totalHours, totalMonths };
+            }
+
+            function updateUI(diff) {
+                if (!diff) {
+                    clearDisplay();
+                    return;
+                }
+                setValue(valYears, diff.years);
+                setValue(valMonths, diff.months);
+                setValue(valWeeks, diff.weeks);
+                setValue(valDays, diff.days);
+                setValue(valHours, diff.hours);
+                setValue(valMinutes, diff.minutes);
+                setValueAnimated(valSeconds, diff.seconds);
+                totalMonthsEl.textContent = fmt(diff.totalMonths);
+                totalDaysEl.textContent = fmt(diff.totalDays);
+                totalHoursEl.textContent = fmt(diff.totalHours);
+                secondsCard.classList.add('live-glow');
+                removeNoData();
+                currentDiff = diff;
+            }
+
+            function setValue(el, val) {
+                const str = fmt(val);
+                if (el.textContent !== str) {
+                    el.textContent = str;
+                    el.style.transform = 'scale(1.1)';
+                    setTimeout(() => el.style.transform = 'scale(1)', 120);
+                }
+            }
+
+            function setValueAnimated(el, val) {
+                const str = fmt(val);
+                if (el.textContent !== str) {
+                    el.textContent = str;
+                    el.style.transform = 'scale(1.2)';
+                    setTimeout(() => el.style.transform = 'scale(1)', 100);
+                }
+            }
+
+            function clearDisplay() {
+                [valYears, valMonths, valWeeks, valDays, valHours, valMinutes, valSeconds].forEach(el => {
+                    el.textContent = '—';
+                    el.style.transform = 'scale(1)';
+                });
+                totalMonthsEl.textContent = '—';
+                totalDaysEl.textContent = '—';
+                totalHoursEl.textContent = '—';
+                secondsCard.classList.remove('live-glow');
+                allCards.forEach(c => c.classList.add('no-data'));
+                currentDiff = null;
+            }
+
+            function removeNoData() {
+                allCards.forEach(c => c.classList.remove('no-data'));
+            }
+
+            function getParams() {
+                const fromVal = fromDate.value;
+                if (!fromVal) return null;
+                const [fy, fm, fd] = fromVal.split('-').map(Number);
+                const start = new Date(fy, fm - 1, fd, 0, 0, 0);
+
+                const toVal = toDate.value;
+                if (!toVal) return null;
+                const now = new Date();
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+                if (toVal === todayStr) {
+                    return { start, end: new Date(), live: true };
+                } else {
+                    const [ty, tm, td] = toVal.split('-').map(Number);
+                    return { start, end: new Date(ty, tm - 1, td, 0, 0, 0), live: false };
+                }
+            }
+
+            function tick() {
+                const params = getParams();
+                if (!params) {
+                    clearDisplay();
+                    stopLive();
+                    return;
+                }
+                const diff = computeDiff(params.start, params.end);
+                updateUI(diff);
+
+                if (params.live) {
+                    if (!isLiveActive) startLive();
+                    liveBadge.style.display = 'inline-flex';
+                } else {
+                    if (isLiveActive) stopLive();
+                    liveBadge.style.display = 'none';
+                }
+            }
+
+            function startLive() {
+                if (liveInterval) return;
+                isLiveActive = true;
+                liveInterval = setInterval(() => {
+                    const params = getParams();
+                    if (!params || !params.live) {
+                        stopLive();
+                        tick(); // refresh static
+                        return;
+                    }
+                    const diff = computeDiff(params.start, new Date());
+                    updateUI(diff);
+                }, 1000);
+            }
+
+            function stopLive() {
+                if (liveInterval) {
+                    clearInterval(liveInterval);
+                    liveInterval = null;
+                }
+                isLiveActive = false;
+                liveBadge.style.display = 'none';
+                secondsCard.classList.remove('live-glow');
+            }
+
+            // Event handling
+            fromDate.addEventListener('change', () => { tick(); save(); });
+            fromDate.addEventListener('input', () => { tick(); save(); });
+            toDate.addEventListener('change', () => { tick(); save(); });
+            toDate.addEventListener('input', () => { tick(); save(); });
+            userName.addEventListener('input', save);
+
+            function generateText() {
+                const name = userName.value.trim();
+                if (!currentDiff || !fromDate.value || !toDate.value) return 'No data available.';
+                const d = currentDiff;
+                let text = `📅 ZK Age Calculator\n`;
+                if (name) text = `👤 ${name}\n📅 ZK Age Calculator\n`;
+                text += `📆 From: ${fromDate.value}\n📆 To: ${toDate.value}\n`;
+                text += `──────────────────\n`;
+                text += `📊 Years: ${d.years.toLocaleString()}\n📊 Months: ${d.months.toLocaleString()}\n📊 Weeks: ${d.weeks.toLocaleString()}\n📊 Days: ${d.days.toLocaleString()}\n📊 Hours: ${d.hours.toLocaleString()}\n📊 Minutes: ${d.minutes.toLocaleString()}\n📊 Seconds: ${d.seconds.toLocaleString()}\n`;
+                text += `──────────────────\n`;
+                text += `📦 Total Months: ${d.totalMonths.toLocaleString()}\n🌍 Total Days: ${d.totalDays.toLocaleString()}\n⏱️ Total Hours: ${d.totalHours.toLocaleString()}\n`;
+                text += `Developed by Hafiz Khalid Mahmood (0310-6465624)`;
+                return text;
+            }
+
+            async function copyToClipboard() {
+                const text = generateText();
+                try {
+                    await navigator.clipboard.writeText(text);
+                    copyBtn.classList.add('copy-success');
+                    copyBtn.innerHTML = '✅ Copied';
+                    setTimeout(() => {
+                        copyBtn.classList.remove('copy-success');
+                        copyBtn.innerHTML = '📋 Copy';
+                    }, 2000);
+                } catch (err) {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    copyBtn.classList.add('copy-success');
+                    copyBtn.innerHTML = '✅ Copied';
+                    setTimeout(() => {
+                        copyBtn.classList.remove('copy-success');
+                        copyBtn.innerHTML = '📋 Copy';
+                    }, 2000);
+                }
+            }
+
+            async function shareResult() {
+                const text = generateText();
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: 'ZK Age Calculator',
+                            text: text
+                        });
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            // If share fails for any reason, fallback to copy
+                            await copyToClipboard();
+                            alert('Sharing failed. Results copied to clipboard instead.');
+                        }
+                    }
+                } else {
+                    // Desktop fallback
+                    await copyToClipboard();
+                    alert('Share not supported on this device. Results copied to clipboard.');
+                }
+            }
+
+            copyBtn.addEventListener('click', copyToClipboard);
+            shareBtn.addEventListener('click', shareResult);
+
+            resetBtn.addEventListener('click', () => {
+                userName.value = '';
+                fromDate.value = '';
+                toDate.value = '';
+                clearDisplay();
+                stopLive();
+                liveBadge.style.display = 'none';
+                localStorage.removeItem('zkAgeCalcPro');
+                resetBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => resetBtn.style.transform = 'scale(1)', 150);
+            });
+
+            function save() {
+                try {
+                    localStorage.setItem('zkAgeCalcPro', JSON.stringify({
+                        name: userName.value,
+                        from: fromDate.value,
+                        to: toDate.value
+                    }));
+                } catch (e) {}
+            }
+
+            function load() {
+                try {
+                    const data = JSON.parse(localStorage.getItem('zkAgeCalcPro'));
+                    if (data) {
+                        if (data.name) userName.value = data.name;
+                        if (data.from) fromDate.value = data.from;
+                        if (data.to) toDate.value = data.to;
+                        return true;
+                    }
+                } catch (e) {}
+                return false;
+            }
+
+            function init() {
+                const loaded = load();
+                if (!loaded) {
+                    const today = new Date();
+                    const y = today.getFullYear();
+                    const m = String(today.getMonth()+1).padStart(2,'0');
+                    const d = String(today.getDate()).padStart(2,'0');
+                    toDate.value = `${y}-${m}-${d}`;
+                }
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth()+1).padStart(2,'0');
+                const dd = String(today.getDate()).padStart(2,'0');
+                fromDate.setAttribute('max', `${yyyy}-${mm}-${dd}`);
+                toDate.setAttribute('max', `${yyyy}-${mm}-${dd}`);
+                tick();
+            }
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    stopLive();
+                } else {
+                    tick();
+                }
+            });
+
+            window.addEventListener('beforeunload', save);
+            init();
+        })();
+    </script>
+</body>
+</html>
